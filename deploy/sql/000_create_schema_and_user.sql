@@ -1,6 +1,9 @@
--- Run once as superuser test_user1 on Mac and on Primary (xbox1).
+-- Run once as superuser test_user1:
+--   Mac: always
+--   Ubuntu Primary: xbox2 when DEPLOY_ARCHITECTURE=ALL-IN-ONE,
+--                   xbox1 when DEPLOY_ARCHITECTURE=MINI_PRODUCTION
+-- Replica hosts receive the schema via streaming replication — do not run there.
 -- Creates schema tutalink + role tutalink_user with privileges only on that schema.
--- Replica receives this via streaming replication — do not run on the Replica.
 
 CREATE SCHEMA IF NOT EXISTS tutalink;
 

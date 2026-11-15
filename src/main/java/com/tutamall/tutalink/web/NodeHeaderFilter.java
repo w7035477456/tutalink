@@ -11,7 +11,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-/** Adds X-Tutalink-Node so round-robin across xbox3/xbox4 can be verified. */
+/** Adds X-Tutalink-Node so round-robin across web hosts (xbox2 ALL-IN-ONE; xbox2+xbox3 MINI_PRODUCTION) can be verified. */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class NodeHeaderFilter extends OncePerRequestFilter {

@@ -26,9 +26,20 @@ Ubuntu-only Postgres: `######## DO THIS ON UBUNTU BEGIN ########` … `####### E
 ## SSH
 Same hardening as TutaMall: port `59221`, `-o IdentitiesOnly=yes`, key `~/.ssh/xbox2.pem` (unless Andrew provides new keys). Prefer `scripts/deploy-ssh-mac.sh` from `~/code/main`. Never plain `ssh lawsen0@host`. User: `lawsen0`.
 
+## DEPLOY_ARCHITECTURE (from `~/.ssh/be/.env`)
+tutalink deploy/health/schema scripts read `DEPLOY_ARCHITECTURE` (optional override in `~/.ssh/tutalink/.env`). Do **not** hard-code hosts in Java.
+
+| Value | Primary (DB / Flyway) | tutalink web hosts | Notes |
+|-------|------------------------|--------------------|-------|
+| `ALL-IN-ONE` | xbox2 `192.168.222.202` | xbox2 | Mac: local Postgres for both primary & replica |
+| `MINI_PRODUCTION` | xbox1 `192.168.202.201` (R830) | xbox2 (R730, replica/P100), xbox3 (R630, replica) | |
+| `FULL_PRODUCTION` | — | — | Not implemented yet — scripts refuse |
+
+Verify with `./scripts/print-architecture.sh`.
+
 ## Cluster rules
 1. Stateless app servers — no in-process Map, no HTTP session, no local-disk state. Durable state in Postgres; shared cache / rate limits in Redis (`tutalink:` prefix, always TTL).
-2. Writes → Primary (xbox1). Reads → Replica. Dual datasources + `AbstractRoutingDataSource` + `LazyConnectionDataSourceProxy`. `@Transactional(readOnly = true)` → replica.
+2. Writes → Primary. Reads → Replica. Dual datasources + `AbstractRoutingDataSource` + `LazyConnectionDataSourceProxy`. `@Transactional(readOnly = true)` → replica. On ALL-IN-ONE / Mac, primary URL == replica URL.
 3. Flyway against Primary only.
 4. Unique short codes via DB UNIQUE + retry on collision (max 5).
 5. Redis is cache, never source of truth. Fail open on rate limit / cache errors.
@@ -37,15 +48,7 @@ Same hardening as TutaMall: port `59221`, `-o IdentitiesOnly=yes`, key `~/.ssh/x
 8. Health at `/tutalink/actuator/health` (DB + Redis). `server.shutdown=graceful`.
 9. Response header `X-Tutalink-Node: <hostname>` on every response.
 10. Logs to `${TUTALINK_LOG_DIR}` only — no other files.
-11. Same build on every host in `deploy/hosts.txt`.
-
-## Topology
-| Server | IP | tutalink role |
-|--------|-----|---------------|
-| xbox1 | 192.168.202.201 | Postgres Primary, HAProxy, Flyway |
-| xbox3 | 192.168.202.203 | tutalink instance, reads local Replica |
-| xbox4 | 192.168.202.204 | tutalink instance, reads Replica on xbox3 |
-| xbox2 | 192.168.222.202 | retired |
+11. Deploys go to every web host selected by `DEPLOY_ARCHITECTURE`.
 
 Paths: `/l/{code}`, `/tutalink/api/**`, `/tutalink/actuator/health` → tutalink :4100. Everything else → TutaMall. Do not modify `~/code/main`; give Andrew DO THIS blocks for HAProxy / Vite.
 

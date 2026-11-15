@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
-# Compare tutalink schema on Mac vs Ubuntu Primary. Prints "same" or "difference".
+# Compare tutalink schema on Mac vs Ubuntu Primary (host depends on DEPLOY_ARCHITECTURE).
+# Prints "same" or "difference".
 set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=lib/architecture.sh
+source "$ROOT/scripts/lib/architecture.sh"
+
+tutalink_load_architecture
 
 MAC_DUMP=$(mktemp)
 UBU_DUMP=$(mktemp)
@@ -14,11 +21,11 @@ PGDATABASE="${PGDATABASE:-outdatedDBOct2021}"
 pg_dump --schema-only -n tutalink -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" \
   | grep -vE '^--|^SET |^SELECT pg_catalog|^$' | sed 's/[ \t]*$//' | sort > "$MAC_DUMP"
 
-UBUNTU_PSQL="${UBUNTU_PSQL:-$HOME/code/main/scripts/ubuntu-psql.sh}"
-# Dump schema on Ubuntu Primary via a one-shot pg_dump over SSH if available
+PRIMARY_TARGET="$(tutalink_ssh_target "$TUTALINK_PRIMARY_HOST")"
+echo "Comparing Mac tutalink schema vs Primary $TUTALINK_PRIMARY_HOST ($PRIMARY_TARGET) [$TUTALINK_ARCHITECTURE]" >&2
+
 if [[ -x "$HOME/code/main/scripts/deploy-ssh-mac.sh" ]]; then
-  PRIMARY="${UBUNTU_PRIMARY:-lawsen0@192.168.202.201}"
-  "$HOME/code/main/scripts/deploy-ssh-mac.sh" "$PRIMARY" \
+  "$HOME/code/main/scripts/deploy-ssh-mac.sh" "$PRIMARY_TARGET" \
     "pg_dump --schema-only -n tutalink -h 127.0.0.1 -p 50010 -U test_user1 -d outdatedDBOct2021" \
     | grep -vE '^--|^SET |^SELECT pg_catalog|^$' | sed 's/[ \t]*$//' | sort > "$UBU_DUMP"
 else

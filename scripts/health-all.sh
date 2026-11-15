@@ -1,26 +1,25 @@
 #!/usr/bin/env bash
-# Curl health on every host in deploy/hosts.txt (:4100).
+# Curl tutalink health on every web host for the current DEPLOY_ARCHITECTURE.
 set -euo pipefail
+
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=lib/architecture.sh
+source "$ROOT/scripts/lib/architecture.sh"
+
+tutalink_load_architecture
+
 DEPLOY_SSH="${HOME}/code/main/scripts/deploy-ssh-mac.sh"
 
-resolve() {
-  case "$1" in
-    xbox3) echo "192.168.202.203" ;;
-    xbox4) echo "192.168.202.204" ;;
-    xbox1) echo "192.168.202.201" ;;
-    *) echo "$1" ;;
-  esac
-}
+echo "tutalink health: DEPLOY_ARCHITECTURE=$TUTALINK_ARCHITECTURE"
 
-while IFS= read -r host || [[ -n "$host" ]]; do
-  [[ -z "$host" || "$host" =~ ^# ]] && continue
-  ip=$(resolve "$host")
+for host in "${TUTALINK_WEB_HOSTS[@]}"; do
+  ip="$(tutalink_host_ip "$host")"
   echo -n "$host ($ip): "
   if [[ -x "$DEPLOY_SSH" ]]; then
-    "$DEPLOY_SSH" "lawsen0@$ip" 'curl -fsS http://localhost:4100/tutalink/actuator/health' || echo FAIL
+    "$DEPLOY_SSH" "$(tutalink_ssh_target "$host")" \
+      'curl -fsS http://localhost:4100/tutalink/actuator/health' || echo FAIL
   else
     curl -fsS "http://${ip}:4100/tutalink/actuator/health" || echo FAIL
   fi
   echo
-done < "$ROOT/deploy/hosts.txt"
+done

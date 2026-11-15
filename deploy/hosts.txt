@@ -1,2 +1,9 @@
-xbox3
-xbox4
+# DEPRECATED as source of truth — deploy.sh / health-all.sh read DEPLOY_ARCHITECTURE
+# from ~/.ssh/be/.env (or ~/.ssh/tutalink/.env / env var).
+#
+# ALL-IN-ONE      → xbox2
+# MINI_PRODUCTION → xbox2 xbox3   (Primary = xbox1)
+# FULL_PRODUCTION → (later)
+#
+# Kept for humans / older notes only.
+xbox2
