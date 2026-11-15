@@ -1,0 +1,79 @@
+server:
+  port: ${SERVER_PORT:4100}
+  shutdown: graceful
+  forward-headers-strategy: native
+
+spring:
+  application:
+    name: tutalink
+  config:
+    import: optional:file:${user.home}/.ssh/tutalink/.env[.properties]
+  jpa:
+    open-in-view: false  # avoid LazyInitializationException surprises; load associations in @Transactional
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: tutalink
+  flyway:
+    enabled: true
+    create-schemas: true
+    schemas: tutalink
+    default-schema: tutalink
+    # Flyway always hits the Primary (never the Replica)
+    url: ${DB_PRIMARY_URL}
+    user: ${DB_USER:tutalink_user}
+    password: ${DB_PASSWORD}
+  datasource:
+    primary:
+      url: ${DB_PRIMARY_URL}
+      username: ${DB_USER:tutalink_user}
+      password: ${DB_PASSWORD}
+      driver-class-name: org.postgresql.Driver
+    replica:
+      url: ${DB_REPLICA_URL:${DB_PRIMARY_URL}}
+      username: ${DB_USER:tutalink_user}
+      password: ${DB_PASSWORD}
+      driver-class-name: org.postgresql.Driver
+  data:
+    redis:
+      url: ${REDIS_URL:redis://localhost:6379}
+  cache:
+    type: redis
+  threads:
+    virtual:
+      enabled: false
+
+management:
+  endpoints:
+    web:
+      base-path: /tutalink/actuator
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when_authorized
+  health:
+    redis:
+      enabled: true
+    db:
+      enabled: true
+
+tutalink:
+  base-url: ${TUTALINK_BASE_URL:http://localhost:4100/l/}
+  code-length: 7
+  cache-ttl: 1h
+  api-key: ${TUTALINK_API_KEY}
+  ip-salt: ${TUTALINK_IP_SALT:change-me}
+
+springdoc:
+  api-docs:
+    path: /tutalink/api/docs
+  swagger-ui:
+    path: /tutalink/api/docs/swagger-ui.html
+
+logging:
+  file:
+    name: ${TUTALINK_LOG_DIR:./logs}/tutalink.log
+  level:
+    com.tutamall.tutalink: INFO

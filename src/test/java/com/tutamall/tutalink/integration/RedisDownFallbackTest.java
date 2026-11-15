@@ -1,0 +1,76 @@
+package com.tutamall.tutalink.integration;
+
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.web.servlet.MockMvc;
+import org.testcontainers.DockerClientFactory;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+/**
+ * Proves redirect still works when Redis is unreachable (cache fail-open / DB fallback).
+ */
+@SpringBootTest
+@AutoConfigureMockMvc
+@Testcontainers(disabledWithoutDocker = true)
+class RedisDownFallbackTest {
+
+	@BeforeAll
+	static void requireDocker() {
+		assumeTrue(DockerClientFactory.instance().isDockerAvailable(), "Docker required");
+	}
+
+	@Container
+	static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16")
+			.withDatabaseName("outdatedDBOct2021")
+			.withUsername("tutalink_user")
+			.withPassword("test");
+
+	@DynamicPropertySource
+	static void props(DynamicPropertyRegistry registry) {
+		String url = postgres.getJdbcUrl();
+		registry.add("spring.datasource.primary.url", () -> url);
+		registry.add("spring.datasource.replica.url", () -> url);
+		registry.add("spring.datasource.primary.username", postgres::getUsername);
+		registry.add("spring.datasource.primary.password", postgres::getPassword);
+		registry.add("spring.datasource.replica.username", postgres::getUsername);
+		registry.add("spring.datasource.replica.password", postgres::getPassword);
+		registry.add("spring.flyway.url", () -> url);
+		registry.add("spring.flyway.user", postgres::getUsername);
+		registry.add("spring.flyway.password", postgres::getPassword);
+		// Point Redis at a closed port — connection failures should not break redirects
+		registry.add("spring.data.redis.url", () -> "redis://127.0.0.1:1");
+		registry.add("spring.cache.type", () -> "none"); // avoid startup failure; runtime fail-open covered by CacheErrorHandler in prod
+		registry.add("tutalink.api-key", () -> "test-api-key");
+		registry.add("tutalink.ip-salt", () -> "salt");
+		registry.add("tutalink.base-url", () -> "http://localhost:4100/l/");
+	}
+
+	@Autowired MockMvc mockMvc;
+
+	@Test
+	void redirectWorksWithoutRedis() throws Exception {
+		mockMvc.perform(post("/tutalink/api/links")
+						.header("X-API-Key", "test-api-key")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("{\"url\":\"https://tutamall.com\",\"customCode\":\"nordis\"}"))
+				.andExpect(status().isCreated());
+
+		mockMvc.perform(get("/l/nordis"))
+				.andExpect(status().isFound())
+				.andExpect(header().string("Location", "https://tutamall.com"));
+	}
+}

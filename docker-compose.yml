@@ -1,0 +1,14 @@
+# Optional local Postgres + Redis for Mac dev / Testcontainers alternative
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: test_user1
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: outdatedDBOct2021
+    ports:
+      - "50010:5432"
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"

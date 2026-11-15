@@ -1,0 +1,7 @@
+spring:
+  jpa:
+    show-sql: true
+logging:
+  level:
+    com.tutamall.tutalink: DEBUG
+    org.springframework.jdbc: DEBUG

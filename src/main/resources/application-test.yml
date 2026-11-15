@@ -1,0 +1,18 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  flyway:
+    enabled: true
+tutalink:
+  base-url: http://localhost:4100/l/
+  code-length: 7
+  cache-ttl: 1h
+  api-key: test-api-key
+  ip-salt: test-salt
+logging:
+  level:
+    root: WARN
