@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Rolling deploy of tutalink to web hosts selected by DEPLOY_ARCHITECTURE.
-#   ALL-IN-ONE      → xbox2
+#   ALL-IN-ONE      → xbox0
 #   MINI_PRODUCTION → xbox2 + xbox3  (Primary stays on xbox1; Flyway runs there via app start)
 #   FULL_PRODUCTION → refused until implemented
 set -euo pipefail

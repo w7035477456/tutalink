@@ -31,7 +31,7 @@ tutalink deploy/health/schema scripts read `DEPLOY_ARCHITECTURE` (optional overr
 
 | Value | Primary (DB / Flyway) | tutalink web hosts | Notes |
 |-------|------------------------|--------------------|-------|
-| `ALL-IN-ONE` | xbox2 `192.168.222.202` | xbox2 | Mac: local Postgres for both primary & replica |
+| `ALL-IN-ONE` | xbox0 `192.168.222.200` | xbox0 | Mac: local Postgres for both primary & replica |
 | `MINI_PRODUCTION` | xbox1 `192.168.202.201` (R830) | xbox2 (R730, replica/P100), xbox3 (R630, replica) | |
 | `FULL_PRODUCTION` | — | — | Not implemented yet — scripts refuse |
 

@@ -8,7 +8,7 @@
 #   3) ~/.ssh/be/.env  (same key TutaMall uses)
 #
 # Values:
-#   ALL-IN-ONE      → app + DB on xbox2 (Mac: local Postgres for both primary & replica)
+#   ALL-IN-ONE      → app + DB on xbox0 (192.168.222.200); Mac: local Postgres both sides
 #   MINI_PRODUCTION → Primary xbox1; web (tutalink) on xbox2 + xbox3
 #   FULL_PRODUCTION → not implemented yet
 
@@ -39,23 +39,18 @@ tutalink_load_architecture() {
   if [[ -z "$raw" ]]; then
     raw="ALL-IN-ONE"
   fi
-  # Normalize aliases from comments / typos
-  raw=$(printf '%s' "$raw" | tr '[:lower:]' '[:upper:]' | tr '_' '-')
+  raw=$(printf '%s' "$raw" | tr '[:lower:]' '[:upper:]')
   case "$raw" in
-    ALL-IN-ONE|ALLINONE) raw="ALL-IN-ONE" ;;
-    MINI-PRODUCTION|MINIPRODUCTION) raw="MINI_PRODUCTION" ;;
-    FULL-PRODUCTION|FULLPRODUCTION) raw="FULL_PRODUCTION" ;;
-  esac
-  # Restore underscore form for MINI_/FULL_
-  case "$raw" in
-    MINI-PRODUCTION) raw="MINI_PRODUCTION" ;;
-    FULL-PRODUCTION) raw="FULL_PRODUCTION" ;;
+    ALL-IN-ONE|ALLINONE|ALL_IN_ONE) raw="ALL-IN-ONE" ;;
+    MINI-PRODUCTION|MINIPRODUCTION|MINI_PRODUCTION) raw="MINI_PRODUCTION" ;;
+    FULL-PRODUCTION|FULLPRODUCTION|FULL_PRODUCTION) raw="FULL_PRODUCTION" ;;
   esac
 
   TUTALINK_ARCHITECTURE="$raw"
   TUTALINK_SSH_USER="${SSH_USER:-lawsen0}"
 
-  # Canonical IPs (override with TUTALINK_XBOX1_IP etc. if needed)
+  # Canonical IPs (override with TUTALINK_XBOX*_IP if needed)
+  TUTALINK_XBOX0_IP="${TUTALINK_XBOX0_IP:-192.168.222.200}"
   TUTALINK_XBOX1_IP="${TUTALINK_XBOX1_IP:-192.168.202.201}"
   TUTALINK_XBOX2_IP="${TUTALINK_XBOX2_IP:-192.168.222.202}"
   TUTALINK_XBOX3_IP="${TUTALINK_XBOX3_IP:-192.168.202.203}"
@@ -66,10 +61,10 @@ tutalink_load_architecture() {
 
   case "$TUTALINK_ARCHITECTURE" in
     ALL-IN-ONE)
-      # Single box: xbox2 holds HAProxy, Postgres Primary, and the web app.
-      TUTALINK_WEB_HOSTS=(xbox2)
-      TUTALINK_PRIMARY_HOST=xbox2
-      TUTALINK_PRIMARY_IP="$TUTALINK_XBOX2_IP"
+      # Single box: xbox0 holds HAProxy, Postgres Primary, and the web app.
+      TUTALINK_WEB_HOSTS=(xbox0)
+      TUTALINK_PRIMARY_HOST=xbox0
+      TUTALINK_PRIMARY_IP="$TUTALINK_XBOX0_IP"
       ;;
     MINI_PRODUCTION)
       # xbox1 = DB Primary (+ HAProxy). xbox2 + xbox3 = webservers (each with local Replica).
@@ -93,6 +88,7 @@ tutalink_load_architecture() {
 
 tutalink_host_ip() {
   case "$1" in
+    xbox0) printf '%s' "$TUTALINK_XBOX0_IP" ;;
     xbox1) printf '%s' "$TUTALINK_XBOX1_IP" ;;
     xbox2) printf '%s' "$TUTALINK_XBOX2_IP" ;;
     xbox3) printf '%s' "$TUTALINK_XBOX3_IP" ;;

@@ -8,7 +8,7 @@ Java Spring Boot microservice that shortens marketing URLs for TutaMall (`https:
 - Postgres schema `tutalink` (Primary writes / Replica reads)
 - Redis cache + rate limits (`tutalink:` key prefix)
 - Flyway · Spring Security (API key) · Actuator · springdoc OpenAPI
-- PM2 on Ubuntu web hosts selected by `DEPLOY_ARCHITECTURE` (ALL-IN-ONE → xbox2; MINI_PRODUCTION → xbox2+xbox3)
+- PM2 on Ubuntu web hosts selected by `DEPLOY_ARCHITECTURE` (ALL-IN-ONE → xbox0; MINI_PRODUCTION → xbox2+xbox3)
 
 ## Quick start (Mac)
 
@@ -64,7 +64,7 @@ Reads `DEPLOY_ARCHITECTURE` from `~/.ssh/be/.env` (same as TutaMall), optional o
 
 | Value | Primary | Web (tutalink :4100) |
 |-------|---------|----------------------|
-| `ALL-IN-ONE` | xbox2 | xbox2 (Mac: run locally with `dev` profile) |
+| `ALL-IN-ONE` | xbox0 | xbox0 (Mac: run locally with `dev` profile) |
 | `MINI_PRODUCTION` | xbox1 (R830) | xbox2 (R730) + xbox3 (R630) |
 | `FULL_PRODUCTION` | — | not implemented yet |
 
