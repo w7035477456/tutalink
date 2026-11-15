@@ -8,7 +8,8 @@ public record StatsResponse(
 		List<DayCount> clicksPerDay,
 		List<NamedCount> topReferrers,
 		List<NamedCount> topCountries,
-		List<NamedCount> topUtmCampaigns
+		List<NamedCount> topUtmCampaigns,
+		List<NamedCount> topUtmSources
 ) {
 	public record DayCount(String day, long count) {
 	}

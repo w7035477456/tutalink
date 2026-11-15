@@ -38,6 +38,9 @@ public class StatsService {
 						.toList(),
 				clickRepository.topUtmCampaigns(linkId).stream()
 						.map(p -> new StatsResponse.NamedCount(p.getName(), p.getCount()))
+						.toList(),
+				clickRepository.topUtmSources(linkId).stream()
+						.map(p -> new StatsResponse.NamedCount(p.getName(), p.getCount()))
 						.toList()
 		);
 	}

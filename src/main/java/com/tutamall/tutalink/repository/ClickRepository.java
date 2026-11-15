@@ -55,4 +55,14 @@ public interface ClickRepository extends JpaRepository<Click, Long> {
 			LIMIT 10
 			""", nativeQuery = true)
 	List<NamedCountProjection> topUtmCampaigns(@Param("linkId") Long linkId);
+
+	@Query(value = """
+			SELECT COALESCE(NULLIF(c.utm_source, ''), '(none)') AS name, COUNT(*) AS count
+			FROM tutalink.clicks c
+			WHERE c.link_id = :linkId
+			GROUP BY name
+			ORDER BY count DESC
+			LIMIT 10
+			""", nativeQuery = true)
+	List<NamedCountProjection> topUtmSources(@Param("linkId") Long linkId);
 }
