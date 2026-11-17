@@ -32,6 +32,10 @@ public class ApiKeyFilter extends OncePerRequestFilter {
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) {
 		String path = request.getRequestURI();
+		// OpenAPI / Swagger UI are under /tutalink/api/docs but must stay public
+		if (path.startsWith("/tutalink/api/docs")) {
+			return true;
+		}
 		return !path.startsWith("/tutalink/api/");
 	}
 
